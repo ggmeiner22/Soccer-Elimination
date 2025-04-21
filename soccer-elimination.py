@@ -5,23 +5,23 @@ def ford_fulkerson(residual, source, sink):
     """
     Compute the maximum flow from source to sink using the Ford–Fulkerson method.
 
-    :param residual: List[List[int]]
-        A 2D residual capacity matrix of size N×N where residual[u][v] is the
+    :param residual: A 2D residual capacity matrix of size N×N where residual[u][v] is the
         remaining capacity from node u to node v.
-    :param source: int
-        Index of the source node in the residual matrix.
-    :param sink: int
-        Index of the sink node in the residual matrix.
-    :return: int
-        The total maximum flow value from source to sink.
+    :param source: Index of the source node in the residual matrix.
+    :param sink: Index of the sink node in the residual matrix.
+    :return: The total maximum flow value from source to sink.
     """
     n = len(residual)  # Number of nodes in the network
     max_flow = 0  # Accumulator for total flow sent
 
     def dfs_find_path():
         """
+        Locate an augmenting path in the residual graph via DFS.
 
-        :return:
+        Returns:
+          dfs (function): recursive function to perform the DFS search.
+          parent (List[int]): parent[v] gives the node preceding v on the path.
+          visited (List[bool]): tracks which nodes have been visited.
         """
         visited = [False] * n
         parent = [-1] * n
@@ -29,11 +29,6 @@ def ford_fulkerson(residual, source, sink):
         def dfs(u):
             """
             Locate an augmenting path in the residual graph via DFS.
-
-            Returns:
-              dfs (function): recursive function to perform the DFS search.
-              parent (List[int]): parent[v] gives the node preceding v on the path.
-              visited (List[bool]): tracks which nodes have been visited.
             """
             visited[u] = True
             # If we reached sink, path is found
@@ -146,7 +141,7 @@ def build_graph(teams, scores, matches, team):
 
     # List of other teams (excluding 'team')
     other = [t for t in teams if t != team]
-    idx = {t:i for i, t in enumerate(other)}
+    idx = {t: i for i, t in enumerate(other)}
 
     num_remaining_matches = len(rem)
     source = 0
