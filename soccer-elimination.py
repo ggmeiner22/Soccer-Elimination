@@ -1,74 +1,78 @@
 import sys
 
 
+def find_augmenting_path(residual, source, sink):
+    """
+    Locate any path from source to sink with available capacity using DFS.
+
+    :param residual: 2D matrix of residual capacities
+    :param source: index of the source node
+    :param sink: index of the sink node
+    :return: (found: bool, parent: List[int])
+        found: True if a path exists, False otherwise
+        parent: for each node v, parent[v] is the node u from which v was reached
+    """
+    # Number of nodes
+    n = len(residual)
+    # To track visited status for each node
+    visited = [False] * n
+    # To reconstruct path, store predecessor of each node
+    parent = [-1] * n
+
+    # Stack for iterative DFS, start from source
+    stack = [source]
+    visited[source] = True  # mark source as visited
+
+    # Continue until no nodes left to explore
+    while stack:
+        u = stack.pop()
+        # If we've reached the sink, we can stop
+        if u == sink:
+            return True, parent
+        # Otherwise, explore neighbors
+        for v in range(n):
+            # Check if v is unvisited and edge u goes to v has residual capacity
+            if not visited[v] and residual[u][v] > 0:
+                visited[v] = True  # mark v visited
+                parent[v] = u  # record that u goes v in path
+                stack.append(v)  # push v onto stack for further exploration
+    # No path found
+    return False, parent
+
+
 def ford_fulkerson(residual, source, sink):
     """
-    Compute the maximum flow from source to sink using the Ford–Fulkerson method.
-
-    :param residual: A 2D residual capacity matrix of size N×N where residual[u][v] is the
-        remaining capacity from node u to node v.
-    :param source: Index of the source node in the residual matrix.
-    :param sink: Index of the sink node in the residual matrix.
-    :return: The total maximum flow value from source to sink.
+    Compute the maximum flow from source to sink.
+    :param residual: capacity left from u goes to v
+    :param source: index of source node
+    :param sink: index of sink node
+    :return: max flow value
     """
-    n = len(residual)  # Number of nodes in the network
-    max_flow = 0  # Accumulator for total flow sent
+    # total flow accumulated
+    max_flow = 0
 
-    def dfs_find_path():
-        """
-        Locate an augmenting path in the residual graph via DFS.
-
-        Returns:
-          dfs (function): recursive function to perform the DFS search.
-          parent (List[int]): parent[v] gives the node preceding v on the path.
-          visited (List[bool]): tracks which nodes have been visited.
-        """
-        visited = [False] * n
-        parent = [-1] * n
-
-        def dfs(u):
-            """
-            Locate an augmenting path in the residual graph via DFS.
-            """
-            visited[u] = True
-            # If we reached sink, path is found
-            if u == sink:
-                return True
-            for v in range(n):
-                # Traverse edges with remaining capacity > 0
-                if not visited[v] and residual[u][v] > 0:
-                    parent[v] = u
-                    if dfs(v):
-                        return True
-            return False
-
-        return dfs, parent, visited
-
-    # Continuously search for augmenting paths and augment flow
+    # Repeatedly find augmenting paths
     while True:
-        dfs, parent, visited = dfs_find_path()
-        if not dfs(source):
-            # No augmenting path exists meaning the maximum flow has been reached
+        found, parent = find_augmenting_path(residual, source, sink)
+        if not found:
+            # no more augmenting paths
             break
-
-        # Find bottleneck
+        # find bottleneck along path
         path_flow = float('inf')
         v = sink
         while v != source:
             u = parent[v]
             path_flow = min(path_flow, residual[u][v])
             v = u
-
-        # Augment flow along the path and update residual capacities
+        # Augment flow along the path and update residuals
         v = sink
         while v != source:
             u = parent[v]
             residual[u][v] -= path_flow  # reduce forward capacity
             residual[v][u] += path_flow  # increase reverse capacity
             v = u
-
+        # Add to total flow
         max_flow += path_flow
-
     return max_flow
 
 
@@ -137,7 +141,7 @@ def build_graph(teams, scores, matches, team):
     rem = [(x, y) for x, y in matches if x != team and y != team]
     # If no other matches remain, 'team' automatically stays in contention
     if not rem:
-        return [[ ]], 'no_matches'
+        return [[]], 'no_matches'
 
     # List of other teams (excluding 'team')
     other = [t for t in teams if t != team]
@@ -198,8 +202,8 @@ def evaluate_team(teams, scores, matches, team):
     # Get the residual matrix, starting index for matches, and number of match nodes
     residual, match_start, num_remaining_matches = graph_data
 
-    # Special case: if no matches remain, match_start is returned as [[ ]]
-    if match_start == [[ ]]:
+    # Special case: if no matches remain, match_start is returned as [[]]
+    if match_start == [[]]:
         # The team stays in contention by default, with zero extra flow needed
         return True, scores[team], None, 0
 
